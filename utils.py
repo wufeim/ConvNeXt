@@ -205,7 +205,7 @@ class WandbLogger(object):
                 "Run `pip install wandb` to install it."
             )
 
-        # Initialize a W&B run 
+        # Initialize a W&B run
         if self._wandb.run is None:
             self._wandb.init(
                 project=args.project,
@@ -308,7 +308,7 @@ def init_distributed_mode(args):
         args.rank = int(os.environ["RANK"])
         args.world_size = int(os.environ['WORLD_SIZE'])
         args.gpu = int(os.environ['LOCAL_RANK'])
-    elif 'SLURM_PROCID' in os.environ:
+    elif 'SLURM_PROCID' in os.environ and not args.disable_slurm:
         args.rank = int(os.environ['SLURM_PROCID'])
         args.gpu = args.rank % torch.cuda.device_count()
 
@@ -461,7 +461,7 @@ def save_model(args, epoch, model, model_without_ddp, optimizer, loss_scaler, mo
             to_save['model_ema'] = get_state_dict(model_ema)
 
         save_on_master(to_save, checkpoint_path)
-    
+
     if is_main_process() and isinstance(epoch, int):
         to_del = epoch - args.save_ckpt_num * args.save_ckpt_freq
         old_ckpt = output_dir / ('checkpoint-%s.pth' % to_del)
@@ -489,9 +489,12 @@ def auto_load_model(args, model, model_without_ddp, optimizer, loss_scaler, mode
                 args.resume, map_location='cpu', check_hash=True)
         else:
             checkpoint = torch.load(args.resume, map_location='cpu')
+        for k in ['pose_head.weight', 'pose_head.bias']:
+            if k in checkpoint['model']:
+                del checkpoint['model'][k]
         model_without_ddp.load_state_dict(checkpoint['model'])
         print("Resume checkpoint %s" % args.resume)
-        if 'optimizer' in checkpoint and 'epoch' in checkpoint:
+        if not args.eval and 'optimizer' in checkpoint and 'epoch' in checkpoint:
             optimizer.load_state_dict(checkpoint['optimizer'])
             if not isinstance(checkpoint['epoch'], str): # does not support resuming with 'best', 'best-ema'
                 args.start_epoch = checkpoint['epoch'] + 1

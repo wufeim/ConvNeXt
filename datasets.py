@@ -35,6 +35,49 @@ def build_dataset(is_train, args):
         root = os.path.join(args.data_path, 'train' if is_train else 'val')
         dataset = datasets.ImageFolder(root, transform=transform)
         nb_classes = 1000
+    elif args.data_set == 'IMNET100':
+        print("reading from datapath", args.data_path)
+        root = os.path.join(args.data_path, 'train' if is_train else 'val')
+        dataset = datasets.ImageFolder(root, transform=transform)
+        nb_classes = 100
+    elif args.data_set == 'ICLR100':
+        print("reading from datapath", args.data_path)
+        root = os.path.join(args.data_path, 'train' if is_train else 'val')
+        dataset = datasets.ImageFolder(root, transform=transform)
+        nb_classes = 100
+    elif args.data_set == 'DST100_gpt4':
+        print("reading from datapath", args.data_path)
+        root = os.path.join(args.data_path, 'train' if is_train else 'val')
+        def is_valid_file(filename: str) -> bool:
+            return 'image_minigpt4_1008' in filename
+        dataset = datasets.ImageFolder(root, transform=transform, is_valid_file=is_valid_file)
+        nb_classes = 100
+    elif args.data_set == 'DST100_simple':
+        print("reading from datapath", args.data_path)
+        root = os.path.join(args.data_path, 'train' if is_train else 'val')
+        def is_valid_file(filename: str) -> bool:
+            return 'image_simple_1008' in filename
+        dataset = datasets.ImageFolder(root, transform=transform, is_valid_file=is_valid_file)
+        nb_classes = 100
+    elif args.data_set == 'DST100_llama':
+        print("reading from datapath", args.data_path)
+        root = os.path.join(args.data_path, 'train' if is_train else 'val')
+        def is_valid_file(filename: str) -> bool:
+            return 'image_llama_1008' in filename
+        dataset = datasets.ImageFolder(root, transform=transform, is_valid_file=is_valid_file)
+        nb_classes = 100
+    elif args.data_set == 'DST100_blip2':
+        print("reading from datapath", args.data_path)
+        root = os.path.join(args.data_path, 'train' if is_train else 'val')
+        def is_valid_file(filename: str) -> bool:
+            return 'image_blip2_1008' in filename
+        dataset = datasets.ImageFolder(root, transform=transform, is_valid_file=is_valid_file)
+        nb_classes = 100
+    elif args.data_set == 'IMNET100_R_19':
+        print("reading from datapath", args.data_path)
+        root = os.path.join(args.data_path, 'train' if is_train else 'val')
+        dataset = datasets.ImageFolder(root, transform=transform)
+        nb_classes = 100
     elif args.data_set == "image_folder":
         root = args.data_path if is_train else args.eval_data_path
         dataset = datasets.ImageFolder(root, transform=transform)
@@ -75,10 +118,10 @@ def build_transform(is_train, args):
     t = []
     if resize_im:
         # warping (no cropping) when evaluated at 384 or larger
-        if args.input_size >= 384:  
+        if args.input_size >= 384:
             t.append(
-            transforms.Resize((args.input_size, args.input_size), 
-                            interpolation=transforms.InterpolationMode.BICUBIC), 
+            transforms.Resize((args.input_size, args.input_size),
+                            interpolation=transforms.InterpolationMode.BICUBIC),
         )
             print(f"Warping {args.input_size} size input images...")
         else:
@@ -87,7 +130,7 @@ def build_transform(is_train, args):
             size = int(args.input_size / args.crop_pct)
             t.append(
                 # to maintain same ratio w.r.t. 224 images
-                transforms.Resize(size, interpolation=transforms.InterpolationMode.BICUBIC),  
+                transforms.Resize(size, interpolation=transforms.InterpolationMode.BICUBIC),
             )
             t.append(transforms.CenterCrop(args.input_size))
 

@@ -127,7 +127,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
             if use_amp:
                 wandb_logger._wandb.log({'Rank-0 Batch Wise/train_grad_norm': grad_norm}, commit=False)
             wandb_logger._wandb.log({'Rank-0 Batch Wise/global_train_step': it})
-            
+
 
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
@@ -135,7 +135,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
 
 @torch.no_grad()
-def evaluate(data_loader, model, device, use_amp=False):
+def evaluate(data_loader, model, device, use_amp=False, extra_mask=None):
     criterion = torch.nn.CrossEntropyLoss()
 
     metric_logger = utils.MetricLogger(delimiter="  ")
@@ -158,6 +158,9 @@ def evaluate(data_loader, model, device, use_amp=False):
         else:
             output = model(images)
             loss = criterion(output, target)
+
+        if extra_mask is not None:
+            output = output[:, extra_mask]
 
         acc1, acc5 = accuracy(output, target, topk=(1, 5))
 
